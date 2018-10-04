@@ -117,7 +117,6 @@ func (c *Cluster) BuildKubeAPIProcess(prefixPath string) v3.Process {
 		"bind-address":                       "0.0.0.0",
 		"insecure-port":                      "0",
 		"secure-port":                        "6443",
-		"cloud-provider":                     c.CloudProvider.Name,
 		"allow-privileged":                   "true",
 		"kubelet-preferred-address-types":    "InternalIP,ExternalIP,Hostname",
 		"service-cluster-ip-range":           c.Services.KubeAPI.ServiceClusterIPRange,
@@ -143,14 +142,20 @@ func (c *Cluster) BuildKubeAPIProcess(prefixPath string) v3.Process {
 		"requestheader-group-headers":        "X-Remote-Group",
 		"requestheader-username-headers":     "X-Remote-User",
 	}
-	if len(c.CloudProvider.Name) > 0 && c.CloudProvider.Name != aws.AWSCloudProviderName {
-		CommandArgs["cloud-config"] = CloudConfigPath
-	}
+
 	if len(c.CloudProvider.Name) > 0 {
+		CommandArgs["cloud-provider"] = c.CloudProvider.Name
+
+		if c.CloudProvider.Name != aws.AWSCloudProviderName {
+			CommandArgs["cloud-config"] = CloudConfigPath
+		}
+
 		c.Services.KubeAPI.ExtraEnv = append(
 			c.Services.KubeAPI.ExtraEnv,
-			fmt.Sprintf("%s=%s", CloudConfigSumEnv, getCloudConfigChecksum(c.CloudProvider)))
+			fmt.Sprintf("%s=%s", CloudConfigSumEnv, getCloudConfigChecksum(c.CloudProvider)),
+		)
 	}
+
 	// check if our version has specific options for this component
 	serviceOptions := c.GetKubernetesServicesOptions()
 	if serviceOptions.KubeAPI != nil {
@@ -222,7 +227,6 @@ func (c *Cluster) BuildKubeControllerProcess(prefixPath string) v3.Process {
 
 	CommandArgs := map[string]string{
 		"address":                     "0.0.0.0",
-		"cloud-provider":              c.CloudProvider.Name,
 		"allow-untagged-cloud":        "true",
 		"configure-cloud-routes":      "false",
 		"leader-elect":                "true",
@@ -237,14 +241,20 @@ func (c *Cluster) BuildKubeControllerProcess(prefixPath string) v3.Process {
 		"service-account-private-key-file": pki.GetKeyPath(pki.KubeAPICertName),
 		"root-ca-file":                     pki.GetCertPath(pki.CACertName),
 	}
-	if len(c.CloudProvider.Name) > 0 && c.CloudProvider.Name != aws.AWSCloudProviderName {
-		CommandArgs["cloud-config"] = CloudConfigPath
-	}
+
 	if len(c.CloudProvider.Name) > 0 {
+		CommandArgs["cloud-provider"] = c.CloudProvider.Name
+
+		if c.CloudProvider.Name != aws.AWSCloudProviderName {
+			CommandArgs["cloud-config"] = CloudConfigPath
+		}
+
 		c.Services.KubeController.ExtraEnv = append(
 			c.Services.KubeController.ExtraEnv,
-			fmt.Sprintf("%s=%s", CloudConfigSumEnv, getCloudConfigChecksum(c.CloudProvider)))
+			fmt.Sprintf("%s=%s", CloudConfigSumEnv, getCloudConfigChecksum(c.CloudProvider)),
+		)
 	}
+
 	// check if our version has specific options for this component
 	serviceOptions := c.GetKubernetesServicesOptions()
 	if serviceOptions.KubeController != nil {
@@ -323,7 +333,6 @@ func (c *Cluster) BuildKubeletProcess(host *hosts.Host, prefixPath string) v3.Pr
 		"cni-bin-dir":                  "/opt/cni/bin",
 		"resolv-conf":                  "/etc/resolv.conf",
 		"allow-privileged":             "true",
-		"cloud-provider":               c.CloudProvider.Name,
 		"kubeconfig":                   pki.GetConfigPath(pki.KubeNodeCertName),
 		"client-ca-file":               pki.GetCertPath(pki.CACertName),
 		"anonymous-auth":               "false",
@@ -338,14 +347,20 @@ func (c *Cluster) BuildKubeletProcess(host *hosts.Host, prefixPath string) v3.Pr
 	if host.Address != host.InternalAddress {
 		CommandArgs["node-ip"] = host.InternalAddress
 	}
-	if len(c.CloudProvider.Name) > 0 && c.CloudProvider.Name != aws.AWSCloudProviderName {
-		CommandArgs["cloud-config"] = CloudConfigPath
-	}
+
 	if len(c.CloudProvider.Name) > 0 {
+		CommandArgs["cloud-provider"] = c.CloudProvider.Name
+
+		if c.CloudProvider.Name != aws.AWSCloudProviderName {
+			CommandArgs["cloud-config"] = CloudConfigPath
+		}
+
 		c.Services.Kubelet.ExtraEnv = append(
 			c.Services.Kubelet.ExtraEnv,
-			fmt.Sprintf("%s=%s", CloudConfigSumEnv, getCloudConfigChecksum(c.CloudProvider)))
+			fmt.Sprintf("%s=%s", CloudConfigSumEnv, getCloudConfigChecksum(c.CloudProvider)),
+		)
 	}
+
 	// check if our version has specific options for this component
 	serviceOptions := c.GetKubernetesServicesOptions()
 	if serviceOptions.Kubelet != nil {
