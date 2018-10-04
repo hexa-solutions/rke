@@ -246,7 +246,7 @@ spec:
           requests:
             memory: 20Mi
             cpu: 10m
-      dnsPolicy: Default  # Don't use cluster DNS.
+      dnsPolicy: ClusterFirst
       serviceAccountName: kube-dns
 ---
 apiVersion: v1
